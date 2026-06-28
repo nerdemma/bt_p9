@@ -69,13 +69,13 @@ bluetoothctl devices
 
 Deberías ver una salida similar a:
 ```
-Device BA:0F:2B:68:94:F7 P9 Headphones
+Device 00:00:00:00:00:00 P9 Headphones
 ```
 
 3. Edita el archivo `main.py` y actualiza la constante global con tu MAC:
 
 ```python
-TARGET_MAC = "BA:0F:2B:68:94:F7"  # Reemplaza con tu MAC real
+TARGET_MAC = "00:00:00:00:00:00"  # Reemplaza con tu MAC real
 ```
 
 ## 🔧 Despliegue como Servicio Systemd
