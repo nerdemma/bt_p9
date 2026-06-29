@@ -1,9 +1,9 @@
-![P9 Bluetooth Media Monitor](https://github.com/nerdemma/bt_p9/docs/bt_p9.svg)
+![P9 Bluetooth Media Monitor](docs/bt_p9.svg)
 
 # P9 Bluetooth Media Monitor & TTS Agent 🎧🚀
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue?style=flat-square&logo=python)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
+[![License: GPL](https://img.shields.io/badge/License-GPL-green.svg?style=flat-square)](LICENSE)
 [![Platform: Debian/Linux](https://img.shields.io/badge/platform-Debian%2FLinux-red?style=flat-square&logo=linux)](https://www.debian.org/)
 [![Bluetooth 5.0+](https://img.shields.io/badge/bluetooth-5.0%2B-blue?style=flat-square&logo=bluetooth)](https://www.bluetooth.com/)
 [![Async Ready](https://img.shields.io/badge/async-ready-brightgreen?style=flat-square)](#-features)
@@ -236,9 +236,6 @@ fi
 
 ## 📊 Use Cases
 
-<<<<<<< HEAD
-**¿Tienes mejoras?** Las pull requests son bienvenidas 🎉
-=======
 Practical integration examples:
 
 ### 🔋 System Alerts
@@ -329,7 +326,7 @@ Contributions are welcome! To help improve this project:
 
 ## 📝 License
 
-Licensed under the **MIT License**. See [LICENSE](LICENSE) file for details.
+Licensed under the **GPL License**. See [LICENSE](LICENSE) file for details.
 
 > Free for personal, commercial, and educational use. Modifications and distributions are permitted under the terms of the license.
 
@@ -359,6 +356,3 @@ Licensed under the **MIT License**. See [LICENSE](LICENSE) file for details.
 ---
 
 **Made with ❤️ for Linux audio enthusiasts**
-
-Last Updated: 2024 | Maintained with ✨
->>>>>>> 4ab0ff5 (translate to english the readme)
