@@ -1,4 +1,4 @@
-![P9 Bluetooth Media Monitor](docs/bt_p9.svg)
+![P9 Bluetooth Media Monitor](docs/bt_p9.jpeg)
 
 # P9 Bluetooth Media Monitor & TTS Agent 🎧🚀
 
