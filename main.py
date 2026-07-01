@@ -19,12 +19,12 @@ CMD_PLAY = ["playerctl", "play"]
 CONNECTED_REGEX = re.compile(rf"Device {TARGET_MAC} Connected: yes", re.IGNORECASE) 
 DISCONECTED_REGEX = re.compile(rf"Device {TARGET_MAC} Connected: no", re.IGNORECASE)
 
-# Estado global en memoria para validar si los auriculares están listos para hablar
+# Estado global en memoria
 is_p9_connected = False
-
+cola_notificaciones = []
 
 def verificar_conexion_inicial() -> bool:
-    """Consulta a bluez el estado actual del dispositivo antes de iniciar las tareas."""
+    
     try:
         result = subprocess.run(
             ["bluetoothctl", "info", TARGET_MAC],
@@ -44,7 +44,7 @@ def verificar_conexion_inicial() -> bool:
 
 
 def control_media(action: str):
-    """Controla la reproducción de música mediante playerctl."""
+
     cmd = CMD_PLAY if action == "play" else CMD_PAUSE
     try:
         subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -54,14 +54,13 @@ def control_media(action: str):
 
 
 def hablar(texto: str):
-    """Genera el audio a partir de texto y lo reproduce."""
+
     archivo_mp3 = "/tmp/p9_tts_temp.mp3"
     try:
         print(f"[TTS] Generando audio para: '{texto}'")
         tts = gTTS(text=texto, lang='es', slow=False)
         tts.save(archivo_mp3)
         
-        # mpv enviará el audio al dispositivo por defecto actual
         subprocess.run(["mpv", "--no-video", archivo_mp3], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         
         if os.path.exists(archivo_mp3):
@@ -69,9 +68,22 @@ def hablar(texto: str):
     except Exception as e:
         print(f"[ERROR TTS] No se pudo procesar la notificación: {e}")
 
+
+def procesar_cola_pendientes():
+    global cola_notificaciones
+    if not cola_notificaciones:
+        return
+    print("[BUFFER] Procesando {len(cola_notificaciones)} notificaciones acumuladas")
+
+    cuerpo_mensaje = "Tenias las siguientes notificaciones pendientes:"
+    cuerpo_mensaje+=". ".join(cola_notificaciones) + "."
+    cola_notificaciones.clear()
+    hablar(cuerpo_mensaje)
+
+
 async def escuchar_notificaciones():
-    """Escucha el Named Pipe de forma 100% asíncrona y reactiva sin hilos ni bloqueos."""
-    global is_p9_connected
+
+    global is_p9_connected, cola_notificaciones
 
     if not os.path.exists(FIFO_PATH):
         os.mkfifo(FIFO_PATH)
@@ -79,7 +91,6 @@ async def escuchar_notificaciones():
 
     print(f"[INIT] Escuchando notificaciones en pipe: {FIFO_PATH}")
 
-    # Abrimos el pipe en modo no-bloqueante usando el sistema operativo de bajo nivel
     fd = os.open(FIFO_PATH, os.O_RDONLY | os.O_NONBLOCK)
     pipe_reader = open(fd, 'r', encoding='utf-8')
 
@@ -87,7 +98,7 @@ async def escuchar_notificaciones():
     queue = asyncio.Queue()
 
     def al_recibir_datos():
-        """Callback que se ejecuta inmediatamente cuando entran bytes al Pipe."""
+
         while True:
             line = pipe_reader.readline()
             if not line:
@@ -96,25 +107,26 @@ async def escuchar_notificaciones():
             if texto:
                 loop.call_soon_threadsafe(queue.put_nowait, texto)
 
-    # Le decimos al loop de asyncio que vigile el descriptor de archivo
+
     loop.add_reader(fd, al_recibir_datos)
 
     try:
-        # Procesamos los textos que entren a la cola de forma asíncrona
+
         while True:
             texto = await queue.get()
             print(f"[PIPE] Recibido: '{texto}'")
             if is_p9_connected:
                 hablar(texto)
             else:
-                print(f"[PIPE] P9 desconectados. Notificación ignorada: '{texto}'")
+                print(f"[PIPE] P9 desconectados. Almacenado en cola buffer: '{texto}'")
+                cola_notificaciones.append(texto)
     finally:
         loop.remove_reader(fd)
         pipe_reader.close()
         
 
 async def monitor_bluetooth():
-    """Monitorea el flujo de eventos de bluetoothctl de forma reactiva."""
+
     global is_p9_connected
     
     print(f"[INIT] iniciando monitoreo para el dispositivo P9 [{TARGET_MAC}]...")
@@ -134,6 +146,10 @@ async def monitor_bluetooth():
                 print(f"[EVENT] Audiculares P9 conectados.")
                 is_p9_connected = True
                 control_media("play")
+                await asyncio.sleep(1.5)
+                procesar_cola_pendientes()
+
+
             elif DISCONECTED_REGEX.search(line):
                 print(f"[EVENT] Audiculares P9 desconectados")
                 is_p9_connected = False
@@ -152,7 +168,7 @@ async def monitor_bluetooth():
 
 
 async def main_async():
-    """Lanza ambas subtareas en el mismo loop de eventos asíncronos."""
+
     await asyncio.gather(
         monitor_bluetooth(),
         escuchar_notificaciones()
@@ -166,7 +182,6 @@ def main():
         print(f"[CRITICAL] La direccion MAC '{TARGET_MAC}' no es valida. Edita el script", file=sys.stderr)
         sys.exit(1)
         
-    # Sincronizamos el estado de conexión actual antes de abrir canales
     is_p9_connected = verificar_conexion_inicial()
 
     try:
